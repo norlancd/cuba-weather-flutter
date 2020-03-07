@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
-
 import 'package:autocomplete_textfield/autocomplete_textfield.dart';
+import 'package:flutter/material.dart';
 
 import 'package:cuba_weather/src/widgets/widgets.dart';
 
@@ -20,13 +19,21 @@ class _MunicipalitySelectionWidgetState
     extends State<MunicipalitySelectionWidget> {
   final GlobalKey<AutoCompleteTextFieldState<String>> key = new GlobalKey();
   final List<String> municipalities;
-  final TextEditingController _textController = TextEditingController();
+  final _textController = TextEditingController();
+  final focusNode = FocusNode();
 
   _MunicipalitySelectionWidgetState({@required this.municipalities})
       : assert(municipalities != null);
 
   @override
+  void dispose() {
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    FocusScope.of(context).autofocus(focusNode);
     return Scaffold(
       appBar: AppBar(
         title: Text('Seleccionar municipio'),
@@ -52,7 +59,6 @@ class _MunicipalitySelectionWidgetState
         ],
       ),
       body: GradientContainerWidget(
-        color: Colors.blue,
         child: Column(
           children: [
             Row(
@@ -67,9 +73,10 @@ class _MunicipalitySelectionWidgetState
                         key: key,
                         controller: _textController,
                         suggestions: this.municipalities,
+                        focusNode: focusNode,
                         decoration: InputDecoration(
                           border: InputBorder.none,
-                          hintText: 'Municipio',
+                          hintText: 'Inserte aquí el municipio deseado',
                         ),
                         style: TextStyle(color: Colors.white),
                         clearOnSubmit: false,

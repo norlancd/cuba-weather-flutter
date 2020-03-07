@@ -1,40 +1,42 @@
 import 'dart:developer';
+import 'dart:ui';
 
-import 'package:cuba_weather_municipality_dart/cuba_weather_municipality_dart.dart';
 import 'package:flutter/material.dart';
-
-import 'package:bloc/bloc.dart';
-import 'package:cuba_weather_dart/cuba_weather_dart.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:cuba_weather/src/app.dart';
+import 'package:cuba_weather/src/utils/constants.dart';
+import 'package:cuba_weather/src/utils/app_state_notifier.dart';
+import 'package:preferences/preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  BlocSupervisor.delegate = SimpleBlocDelegate();
-  final _municipalities = List<String>();
-  for (var item in municipalities) {
-    _municipalities.add(item.name);
-  }
-  _municipalities.sort();
-  String _initialMunicipality;
+  String initialMunicipality;
+  bool darkMode = false;
+  var prefs = await SharedPreferences.getInstance();
   try {
-    var prefs = await SharedPreferences.getInstance();
-    _initialMunicipality = prefs.getString('municipality');
+    initialMunicipality = prefs.getString(Constants.municipality);
+    darkMode = prefs.getBool(Constants.darkMode) ?? false;
   } catch (e) {
     log(e.toString());
+    darkMode = false;
   }
-  runApp(App(
-      api: CubaWeather(),
-      municipalities: _municipalities,
-      initialMunicipality: _initialMunicipality,
-      appName: 'Cuba Weather'));
-}
 
-class SimpleBlocDelegate extends BlocDelegate {
-  @override
-  onTransition(Bloc bloc, Transition transition) {
-    super.onTransition(bloc, transition);
-    log(transition.toString());
-  }
+  await PrefService.init();
+
+  var window = WidgetsBinding.instance.window;
+  bool isDarkSystem = window.platformBrightness == Brightness.dark;
+  darkMode = darkMode || isDarkSystem;
+  prefs.setBool(Constants.darkMode, darkMode);
+
+  runApp(
+    ChangeNotifierProvider<AppStateNotifier>(
+      create: (context) => AppStateNotifier(isDarkModeOn: darkMode),
+      child: App(
+          initialMunicipality: initialMunicipality,
+          appName: Constants.appName,
+          darkMode: darkMode),
+    ),
+  );
 }

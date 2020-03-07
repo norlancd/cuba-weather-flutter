@@ -10,27 +10,26 @@ class LastUpdatedWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
     return Container(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           Container(
-            padding: EdgeInsets.only(top: 13),
             child: Text(
-              'Actualización: ${TimeOfDay.fromDateTime(dateTime).format(context)}',
+              'Actualizado: ${TimeOfDay.fromDateTime(dateTime).format(context)}',
               style: TextStyle(
-                fontSize: 15,
+                fontSize: screenWidth * 0.04,
                 fontWeight: FontWeight.w300,
                 color: Colors.white,
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          IconButton(
-            icon: TimeIcon.iconFromDate(dateTime),
+          BoxedIcon(
+            TimeIcon.fromHour(dateTime.hour),
             color: Colors.white,
-            onPressed: () {},
-            alignment: Alignment.centerLeft,
+            size: screenWidth * 0.065,
           ),
         ],
       ),
