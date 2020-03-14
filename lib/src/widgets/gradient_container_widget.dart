@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 import 'package:provider/provider.dart';
+
 import 'package:cuba_weather/src/utils/app_state_notifier.dart';
 
 class GradientContainerWidget extends StatelessWidget {
@@ -38,8 +39,8 @@ class GradientContainerWidget extends StatelessWidget {
             stops: [0.6, 0.8, 1.0],
             colors: [
               Colors.blue[700],
-              Colors.blue[700],
-              Colors.blue[700],
+              Colors.blue[500],
+              Colors.blue[300],
             ],
           ),
         ),

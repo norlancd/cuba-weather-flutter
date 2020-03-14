@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer';
 
-import 'package:cuba_weather/src/pages/preferences_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,24 +10,20 @@ import 'package:package_info/package_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share/share.dart';
-import 'package:provider/provider.dart';
 
 import 'package:cuba_weather/src/blocs/blocs.dart';
-import 'package:cuba_weather/src/widgets/widgets.dart';
 import 'package:cuba_weather/src/pages/pages.dart';
-import 'package:cuba_weather/src/utils/constants.dart';
-import 'package:cuba_weather/src/utils/app_state_notifier.dart';
+import 'package:cuba_weather/src/utils/utils.dart';
+import 'package:cuba_weather/src/widgets/widgets.dart';
 
 class WeatherWidget extends StatefulWidget {
   final String initialMunicipality;
   final List<String> municipalities;
-  final bool darkMode;
 
   WeatherWidget({
     Key key,
     @required this.municipalities,
     @required this.initialMunicipality,
-    @required this.darkMode,
   })  : assert(municipalities != null),
         super(key: key);
 
@@ -36,14 +31,12 @@ class WeatherWidget extends StatefulWidget {
   State<WeatherWidget> createState() => _WeatherWidgetState(
         municipalities: municipalities,
         initialMunicipality: initialMunicipality,
-        darkMode: darkMode,
       );
 }
 
 class _WeatherWidgetState extends State<WeatherWidget> {
   SystemUiOverlayStyle _currentStyle = SystemUiOverlayStyle.light;
   String initialMunicipality;
-  bool darkMode;
   List<String> municipalities;
   Completer<void> _refreshCompleter;
   String appName = '';
@@ -52,7 +45,6 @@ class _WeatherWidgetState extends State<WeatherWidget> {
   _WeatherWidgetState({
     @required this.municipalities,
     @required this.initialMunicipality,
-    @required this.darkMode,
   }) : assert(municipalities != null);
 
   @override
@@ -65,12 +57,6 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       ));
     }
     start();
-  }
-
-  Future<void> setValueDarkMode(bool newValue) async {
-    var prefs = await SharedPreferences.getInstance();
-    prefs.setBool(Constants.darkMode, newValue);
-    darkMode = newValue;
   }
 
   void start() async {
@@ -89,20 +75,11 @@ class _WeatherWidgetState extends State<WeatherWidget> {
 
   @override
   Widget build(BuildContext context) {
+    var darkMode = Provider.of<AppStateNotifier>(context).isDarkModeOn;
     if (darkMode) {
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle.dark.copyWith(
-          systemNavigationBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: Colors.black,
-        ),
-      );
+      SystemChrome.setSystemUIOverlayStyle(AppTheme.darkOverlayStyle);
     } else {
-      SystemChrome.setSystemUIOverlayStyle(
-        SystemUiOverlayStyle.light.copyWith(
-          systemNavigationBarIconBrightness: Brightness.dark,
-          systemNavigationBarColor: Colors.blue[700],
-        ),
-      );
+      SystemChrome.setSystemUIOverlayStyle(AppTheme.lightOverlayStyle);
     }
     var hour = new DateTime.now().hour;
     return AnnotatedRegion(
@@ -115,95 +92,6 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             padding: EdgeInsets.zero,
             children: <Widget>[
               _createHeader(context),
-              ExpansionTile(
-                title: Text('Pronósticos nacionales'),
-                children: <Widget>[
-                  _createDrawerItem(
-                    context,
-                    icon: Icons.filter_drama,
-                    text: 'Hoy',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ForecastPage(
-                            forecastType: 'today',
-                            pageTitle: 'Pronóstico para hoy',
-                            darkMode: darkMode,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                  hour >= 15
-                      ? _createDrawerItem(
-                          context,
-                          icon: Icons.filter_drama,
-                          text: 'Mañana',
-                          onTap: () {
-                            Navigator.of(context).pop();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ForecastPage(
-                                  forecastType: 'tomorrow',
-                                  pageTitle: 'Pronóstico para mañana',
-                                  darkMode: darkMode,
-                                ),
-                              ),
-                            );
-                          },
-                        )
-                      : Container(),
-                ],
-              ),
-              ExpansionTile(
-                title: Text('Tiempo actual'),
-                children: <Widget>[
-                  _createDrawerItem(
-                    context,
-                    icon: Icons.gradient,
-                    text: 'Perspectivas',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ForecastPage(
-                            forecastType: 'perspectives',
-                            pageTitle: 'Perspectivas del Tiempo',
-                            darkMode: darkMode,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-              ExpansionTile(
-                title: Text('Pronóstico marino'),
-                children: <Widget>[
-                  _createDrawerItem(
-                    context,
-                    icon: Icons.line_style,
-                    text: 'Mares adyacentes',
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MarineForecastPage(
-                            forecastType: 'marine',
-                            pageTitle: 'Pronóstico marino',
-                            darkMode: darkMode,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
               _createDrawerItem(
                 context,
                 icon: Icons.my_location,
@@ -232,35 +120,90 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   );
                 },
               ),
-              _createDrawerItem(
-                context,
-                icon: Icons.info,
-                text: 'Información',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.push(
+              ExpansionTile(
+                title: Text('Pronósticos nacionales'),
+                children: <Widget>[
+                  _createDrawerItem(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => InformationWidget(darkMode),
-                    ),
-                  );
-                },
+                    icon: Icons.filter_drama,
+                    text: 'Hoy',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForecastPage(
+                            forecastType: 'today',
+                            pageTitle: 'Pronóstico para hoy',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  hour >= 15
+                      ? _createDrawerItem(
+                          context,
+                          icon: Icons.filter_drama,
+                          text: 'Mañana',
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ForecastPage(
+                                  forecastType: 'tomorrow',
+                                  pageTitle: 'Pronóstico para mañana',
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : Container(),
+                ],
               ),
-              _createDrawerItem(
-                context,
-                icon: Icons.settings,
-                text: 'Configuración',
-                onTap: () {
-                  Navigator.of(context).pop();
-                  Navigator.push(
+              ExpansionTile(
+                title: Text('Tiempo actual'),
+                children: <Widget>[
+                  _createDrawerItem(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => PreferencesPage(
-                        darkMode: darkMode,
-                      ),
-                    ),
-                  );
-                },
+                    icon: Icons.gradient,
+                    text: 'Perspectivas',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForecastPage(
+                            forecastType: 'perspectives',
+                            pageTitle: 'Perspectivas del Tiempo',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              ExpansionTile(
+                title: Text('Pronóstico marino'),
+                children: <Widget>[
+                  _createDrawerItem(
+                    context,
+                    icon: Icons.line_style,
+                    text: 'Mares adyacentes',
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MarineForecastPage(
+                            forecastType: 'marine',
+                            pageTitle: 'Pronóstico marino',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
               ExpansionTile(
                 title: Text('Donaciones'),
@@ -274,7 +217,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DonateWidget(darkMode),
+                          builder: (context) => DonateWidget(),
                         ),
                       );
                     },
@@ -288,41 +231,16 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DonorsListWidget(darkMode),
+                          builder: (context) => DonorsListWidget(),
                         ),
                       );
                     },
                   ),
                 ],
               ),
-              _createDrawerItem(
-                context,
-                icon: Icons.share,
-                text: 'Compartir',
-                onTap: () async {
-                  Share.share(
-                    'Yo uso $appName: la app meteorológica de '
-                    'Cuba para Cuba. https://cubaweather.app',
-                    subject: '$appName App',
-                  );
-                },
-              ),
               ExpansionTile(
                 title: Text('Redes Sociales'),
                 children: <Widget>[
-                  _createDrawerItem(
-                    context,
-                    icon: FontAwesomeIcons.chrome,
-                    text: 'Web',
-                    onTap: () async {
-                      const url = 'https:cubaweather.app';
-                      if (await canLaunch(url)) {
-                        await launch(url);
-                      } else {
-                        log('Could not launch $url');
-                      }
-                    },
-                  ),
                   _createDrawerItem(
                     context,
                     icon: FontAwesomeIcons.facebook,
@@ -330,7 +248,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     onTap: () async {
                       var fbProtocolUrl = 'fb://page/113097883578567';
                       var fallbackUrl =
-                          "https://www.facebook.com/cubaweatherapp";
+                          'https://www.facebook.com/cubaweatherapp';
                       try {
                         await launch(fbProtocolUrl, forceSafariVC: false);
                       } catch (e) {
@@ -339,6 +257,19 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                         } else {
                           log('Could not launch $fallbackUrl');
                         }
+                      }
+                    },
+                  ),
+                  _createDrawerItem(
+                    context,
+                    icon: FontAwesomeIcons.telegram,
+                    text: 'Telegram',
+                    onTap: () async {
+                      const url = 'https://t.me/cubaweather';
+                      if (await canLaunch(url)) {
+                        await launch(url);
+                      } else {
+                        log('Could not launch $url');
                       }
                     },
                   ),
@@ -357,10 +288,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                   ),
                   _createDrawerItem(
                     context,
-                    icon: FontAwesomeIcons.telegram,
-                    text: 'Telegram',
+                    icon: FontAwesomeIcons.chrome,
+                    text: 'Web',
                     onTap: () async {
-                      const url = 'https://t.me/cubaweather';
+                      const url = 'https:cubaweather.app';
                       if (await canLaunch(url)) {
                         await launch(url);
                       } else {
@@ -369,6 +300,46 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                     },
                   ),
                 ],
+              ),
+              _createDrawerItem(
+                context,
+                icon: Icons.share,
+                text: 'Compartir',
+                onTap: () async {
+                  Share.share(
+                    'Yo uso $appName: la app meteorológica de '
+                    'Cuba para Cuba. https://cubaweather.app',
+                    subject: '$appName App',
+                  );
+                },
+              ),
+              _createDrawerItem(
+                context,
+                icon: Icons.settings,
+                text: 'Configuración',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PreferencesPage(),
+                    ),
+                  );
+                },
+              ),
+              _createDrawerItem(
+                context,
+                icon: Icons.info,
+                text: 'Información',
+                onTap: () {
+                  Navigator.of(context).pop();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InformationWidget(),
+                    ),
+                  );
+                },
               ),
               _createDrawerItem(
                 context,
@@ -413,31 +384,6 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             ],
           ),
           actions: <Widget>[
-            Switch(
-              value: Provider.of<AppStateNotifier>(context).isDarkModeOn,
-              activeColor: Colors.white,
-              onChanged: (boolVal) {
-                Provider.of<AppStateNotifier>(context, listen: false)
-                    .updateTheme(boolVal);
-                setState(() {
-                  if (boolVal) {
-                    _currentStyle = SystemUiOverlayStyle.dark.copyWith(
-                      systemNavigationBarIconBrightness: Brightness.light,
-                      systemNavigationBarColor: Colors.black,
-                    );
-                  } else {
-                    _currentStyle = SystemUiOverlayStyle.light.copyWith(
-                      statusBarColor: Colors.blue[700],
-                      statusBarBrightness: Brightness.light,
-                      statusBarIconBrightness: Brightness.light,
-                      systemNavigationBarIconBrightness: Brightness.dark,
-                      systemNavigationBarColor: Colors.blue[700],
-                    );
-                  }
-                  setValueDarkMode(boolVal);
-                });
-              },
-            ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () async {
@@ -731,9 +677,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => PreferencesPage(
-                  darkMode: darkMode,
-                ),
+                builder: (context) => PreferencesPage(),
               ),
             );
           },

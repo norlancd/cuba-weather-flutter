@@ -1,20 +1,19 @@
-import 'package:cuba_weather/src/models/models.dart';
-import 'package:cuba_weather/src/utils/constants.dart';
-import 'package:cuba_weather/src/utils/weather_client.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:cuba_weather_dart/cuba_weather_dart.dart';
+
+import 'package:cuba_weather/src/utils/utils.dart';
+
 class ForecastPage extends StatefulWidget {
   final String forecastType;
   final String pageTitle;
-  final bool darkMode;
 
   ForecastPage({
     Key key,
     @required this.forecastType,
     @required this.pageTitle,
-    @required this.darkMode,
   })  : assert(forecastType != null),
         super(key: key);
 
@@ -23,7 +22,7 @@ class ForecastPage extends StatefulWidget {
 }
 
 class _ForecastPageState extends State<ForecastPage> {
-  ForecastModel _forecast;
+  InsmetForecastModel _forecast;
   var client = Client();
   bool showImage = false;
   bool error = false;
@@ -44,11 +43,12 @@ class _ForecastPageState extends State<ForecastPage> {
 
   @override
   Widget build(BuildContext context) {
+    var darkMode = Provider.of<AppStateNotifier>(context).isDarkModeOn;
     recoverValueShowImage();
     if (_forecast == null && !error) {
       switch (widget.forecastType) {
         case 'today':
-          WeatherClient().todayForecast(client).then((onValue) {
+          CubaWeather().getInsmetTodayForecast().then((onValue) {
             setState(() {
               _forecast = onValue;
             });
@@ -65,7 +65,7 @@ class _ForecastPageState extends State<ForecastPage> {
           });
           break;
         case 'tomorrow':
-          WeatherClient().tomorrowForecast(client).then((onValue) {
+          CubaWeather().getInsmetTomorrowForecast().then((onValue) {
             setState(() {
               _forecast = onValue;
             });
@@ -85,7 +85,7 @@ class _ForecastPageState extends State<ForecastPage> {
           });
           break;
         case 'perspectives':
-          WeatherClient().perspectiveForecast(client).then((onValue) {
+          CubaWeather().getInsmetPerspectiveForecast().then((onValue) {
             setState(() {
               _forecast = onValue;
             });
@@ -120,7 +120,7 @@ class _ForecastPageState extends State<ForecastPage> {
                   margin: EdgeInsets.all(10),
                   child: Icon(
                     Icons.error_outline,
-                    color: widget.darkMode ? Colors.white : Colors.blue,
+                    color: darkMode ? Colors.white : Colors.blue,
                     size: 150,
                   ),
                 ),
@@ -128,7 +128,7 @@ class _ForecastPageState extends State<ForecastPage> {
                   Constants.errorMessage,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: widget.darkMode ? Colors.white : Colors.blue,
+                    color: darkMode ? Colors.white : Colors.blue,
                     fontWeight: FontWeight.bold,
                     fontSize: 30,
                   ),
@@ -141,7 +141,7 @@ class _ForecastPageState extends State<ForecastPage> {
                       errorMessage,
                       textAlign: TextAlign.justify,
                       style: TextStyle(
-                        color: widget.darkMode ? Colors.white : Colors.blue,
+                        color: darkMode ? Colors.white : Colors.blue,
                         fontWeight: FontWeight.w600,
                         fontSize: 20,
                       ),
@@ -171,21 +171,24 @@ class _ForecastPageState extends State<ForecastPage> {
                                   _forecast.centerName,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: widget.darkMode ? Colors.white : Colors.blue,
+                                    color:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ),
                                 Text(
                                   _forecast.forecastName,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: widget.darkMode ? Colors.white : Colors.blue,
+                                    color:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ),
                                 Text(
                                   _forecast.forecastDate,
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: widget.darkMode ? Colors.white : Colors.blue,
+                                    color:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ),
                                 Padding(
@@ -211,7 +214,8 @@ class _ForecastPageState extends State<ForecastPage> {
                                   _forecast.forecastText,
                                   textAlign: TextAlign.justify,
                                   style: TextStyle(
-                                    color: widget.darkMode ? Colors.white : Colors.blue,
+                                    color:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ),
                               ],
@@ -230,7 +234,8 @@ class _ForecastPageState extends State<ForecastPage> {
                                   'Autores',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: widget.darkMode ? Colors.white : Colors.blue,
+                                    color:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ),
                               ),
@@ -263,7 +268,9 @@ class _ForecastPageState extends State<ForecastPage> {
                                 children: <Widget>[
                                   Text('Mostrar imagen',
                                       style: TextStyle(
-                                        color: widget.darkMode ? Colors.white : Colors.blue,
+                                        color: darkMode
+                                            ? Colors.white
+                                            : Colors.blue,
                                       )),
                                   Switch(
                                     value: showImage,
@@ -272,8 +279,11 @@ class _ForecastPageState extends State<ForecastPage> {
                                         setValueShowImage(value);
                                       });
                                     },
-                                    activeTrackColor: widget.darkMode ? Colors.white : Colors.lightBlueAccent,
-                                    activeColor: widget.darkMode ? Colors.white : Colors.blue,
+                                    activeTrackColor: darkMode
+                                        ? Colors.white
+                                        : Colors.lightBlueAccent,
+                                    activeColor:
+                                        darkMode ? Colors.white : Colors.blue,
                                   ),
                                 ],
                               )
@@ -294,6 +304,7 @@ class _ForecastPageState extends State<ForecastPage> {
   }
 
   List<Widget> _buildAuthors() {
+    var darkMode = Provider.of<AppStateNotifier>(context).isDarkModeOn;
     return _forecast.authors[0] != ""
         ? [
             Padding(
@@ -317,7 +328,7 @@ class _ForecastPageState extends State<ForecastPage> {
                       _forecast.authors[0],
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: widget.darkMode ? Colors.white : Colors.blue,
+                        color: darkMode ? Colors.white : Colors.blue,
                       ),
                     ),
                   ),
@@ -342,7 +353,7 @@ class _ForecastPageState extends State<ForecastPage> {
                       _forecast.authors[1],
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: widget.darkMode ? Colors.white : Colors.blue,
+                        color: darkMode ? Colors.white : Colors.blue,
                       ),
                     ),
                   ),

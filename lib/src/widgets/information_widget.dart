@@ -1,7 +1,6 @@
 import 'dart:developer';
 import 'dart:ui';
 
-import 'package:cuba_weather/src/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -10,12 +9,11 @@ import 'package:getflutter/getflutter.dart';
 import 'package:package_info/package_info.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:cuba_weather/src/utils/utils.dart';
 import 'package:cuba_weather/src/widgets/widgets.dart';
 
 class InformationWidget extends StatefulWidget {
-  final bool darkMode;
-
-  const InformationWidget(this.darkMode);
+  const InformationWidget();
 
   @override
   State<StatefulWidget> createState() => InformationWidgetState();
@@ -39,6 +37,7 @@ class InformationWidgetState extends State<InformationWidget> {
 
   @override
   Widget build(BuildContext context) {
+    var darkMode = Provider.of<AppStateNotifier>(context).isDarkModeOn;
     return Scaffold(
       appBar: AppBar(
         title: Text('Información'),
@@ -98,7 +97,7 @@ class InformationWidgetState extends State<InformationWidget> {
                     'Para situaciones de tiempo peligrosas consultar las '
                     'fuentes oficiales de información.',
                     style: TextStyle(
-                      color: widget.darkMode ? Colors.white : Colors.blue,
+                      color: darkMode ? Colors.white : Colors.blue,
                       fontWeight: FontWeight.bold,
                     ),
                     textAlign: TextAlign.left,
